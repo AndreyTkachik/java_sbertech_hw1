@@ -1,16 +1,16 @@
 import java.util.*;
 
 public class CarGarage implements Garage {
-    HashMap<Integer, Car> cars_by_id = new HashMap();
-    HashMap<Integer, Owner> owner_by_id = new HashMap();
-    HashMap<Integer, ArrayList<Car>> cars_by_owner = new HashMap();
-    HashMap<String, ArrayList<Car>> cars_by_brand = new HashMap();
+    HashMap<Integer, Car> cars_by_id = new HashMap<>();
+    HashMap<Integer, Owner> owner_by_id = new HashMap<>();
+    HashMap<Integer, ArrayList<Car>> cars_by_owner = new HashMap<>();
+    HashMap<String, ArrayList<Car>> cars_by_brand = new HashMap<>();
     SortedMap<Car, Integer> cars_sorted_by_velocity =
-            new TreeMap(Comparator.comparingInt(Car::getMaxVelocity).reversed());
+            new TreeMap<>(Comparator.comparingInt(Car::getMaxVelocity).reversed());
 
     @Override
     public ArrayList<Owner> allCarsUniqueOwners() {
-        ArrayList<Owner> answer = new ArrayList();
+        ArrayList<Owner> answer = new ArrayList<>();
         answer.addAll(owner_by_id.values());
         return answer;
     }
@@ -36,7 +36,7 @@ public class CarGarage implements Garage {
 
     @Override
     public ArrayList<Car> carsWithPowerMoreThan(int power) {
-        ArrayList<Car> answer = new ArrayList();
+        ArrayList<Car> answer = new ArrayList<>();
         for (Car car :cars_sorted_by_velocity.keySet()) {
             if (car.getPower() > power) {
                 answer.add(car);
