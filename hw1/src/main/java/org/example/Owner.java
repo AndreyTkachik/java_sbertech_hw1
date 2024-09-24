@@ -1,3 +1,5 @@
+package org.example;
+
 public class Owner {
     private final String name;
     private final String lastName;
