@@ -5,22 +5,24 @@ import java.util.*;
 public class CarGarage implements Garage {
     HashMap<Integer, Car> cars_by_id = new HashMap<>();
     HashMap<Integer, Owner> owner_by_id = new HashMap<>();
-    HashMap<Integer, ArrayList<Car>> cars_by_owner = new HashMap<>();
-    HashMap<String, ArrayList<Car>> cars_by_brand = new HashMap<>();
-    SortedMap<Car, Integer> cars_sorted_by_velocity =
-            new TreeMap<>(Comparator.comparingInt(Car::getMaxVelocity).reversed());
+    HashMap<Integer, HashSet<Car>> cars_by_owner = new HashMap<>();
+    HashMap<String, HashSet<Car>> cars_by_brand = new HashMap<>();
+    SortedSet<Car> cars_sorted_by_velocity =
+            new TreeSet<>(Comparator.comparingInt(Car::getMaxVelocity).reversed());
+    SortedSet<Car> cars_sorted_by_power =
+            new TreeSet<>(Comparator.comparingInt(Car::getPower).reversed());
 
     @Override
-    public ArrayList<Owner> allCarsUniqueOwners() {
+    public Collection<Owner> allCarsUniqueOwners() {
         ArrayList<Owner> answer = new ArrayList<>();
         answer.addAll(owner_by_id.values());
         return answer;
     }
 
     @Override
-    public ArrayList<Car> topThreeCarsByMaxVelocity() {
+    public Collection<Car> topThreeCarsByMaxVelocity() {
         ArrayList<Car> answer = new ArrayList<>();
-        for (Car car: cars_sorted_by_velocity.keySet()) {
+        for (Car car: cars_sorted_by_velocity) {
             if (answer.size() < 3) {
                 answer.add(car);
             }
@@ -29,7 +31,7 @@ public class CarGarage implements Garage {
     }
 
     @Override
-    public ArrayList<Car> allCarsOfBrand(String brand) {
+    public  Collection<Car> allCarsOfBrand(String brand) {
         if (!cars_by_brand.containsKey(brand)) {
             return null;
         }
@@ -37,18 +39,20 @@ public class CarGarage implements Garage {
     }
 
     @Override
-    public ArrayList<Car> carsWithPowerMoreThan(int power) {
+    public Collection<Car> carsWithPowerMoreThan(int power) {
         ArrayList<Car> answer = new ArrayList<>();
-        for (Car car :cars_sorted_by_velocity.keySet()) {
-            if (car.getPower() > power) {
+        for (Car car : cars_sorted_by_power) {
+            if (car.getPower() >= power) {
                 answer.add(car);
+            } else {
+                break;
             }
         }
         return answer;
     }
 
     @Override
-    public ArrayList<Car> allCarsOfOwner(Owner owner) {
+    public Collection<Car> allCarsOfOwner(Owner owner) {
         if (!owner_by_id.containsKey(owner.getOwnerId())) {
             return null;
         }
@@ -58,8 +62,8 @@ public class CarGarage implements Garage {
     @Override
     public int meanOwnersAgeOfCarBrand(String brand) {
         int answer = 0;
-        for (int indx = 0; indx < cars_by_brand.get(brand).size(); indx++) {
-            answer += owner_by_id.get(cars_by_brand.get(brand).get(indx).getOwnerId()).getAge();
+        for (Car car : cars_by_brand.get(brand)) {
+            answer += owner_by_id.get(car.getOwnerId()).getAge();
         }
         return answer / cars_by_brand.get(brand).size();
     }
@@ -76,33 +80,18 @@ public class CarGarage implements Garage {
         }
         Integer tmp_owner_id = cars_by_id.get(carId).getOwnerId();
         Car answer = null;
-        for (int indx = 0; indx < cars_by_owner.get(tmp_owner_id).size(); indx++) {
-            if(cars_by_owner.get(tmp_owner_id).get(indx).equals(cars_by_id.get(carId))) {
-                cars_by_owner.get(tmp_owner_id).remove(indx);
-                if (cars_by_owner.get(tmp_owner_id).isEmpty()) {
-                    cars_by_owner.remove(tmp_owner_id);
-                    owner_by_id.remove(tmp_owner_id);
-                }
-                answer = cars_by_id.get(carId);
-                cars_by_id.remove(carId);
-                break;
+        if(cars_by_owner.get(tmp_owner_id).contains(cars_by_id.get(carId))) {
+            cars_by_owner.get(tmp_owner_id).remove(cars_by_id.get(carId));
+            if (cars_by_owner.get(tmp_owner_id).isEmpty()) {
+                cars_by_owner.remove(tmp_owner_id);
+                owner_by_id.remove(tmp_owner_id);
             }
+            answer = cars_by_id.get(carId);
+            cars_by_id.remove(carId);
         }
-        for (int indx = 0; indx <
-                cars_by_brand.get(Objects.requireNonNull(answer).getBrand()).size(); indx++) {
-            if(cars_by_brand.get(Objects.requireNonNull(answer).getBrand()).get(indx).getCarId()
-                    == (answer.getCarId())) {
-                cars_by_brand.get(Objects.requireNonNull(answer).getBrand()).remove(indx);
-                break;
-            }
-        }
-        for (Iterator<Map.Entry<Car, Integer>> it = cars_sorted_by_velocity.entrySet().iterator(); it.hasNext();) {
-            Map.Entry<Car, Integer> entry = it.next();
-            if (entry.getKey().getCarId() == answer.getCarId()) {
-                it.remove();
-                break;
-            }
-        }
+        cars_by_brand.get(Objects.requireNonNull(answer).getBrand()).remove(answer);
+        cars_sorted_by_velocity.remove(answer);
+        cars_sorted_by_power.remove(answer);
         return answer;
     }
 
@@ -110,10 +99,11 @@ public class CarGarage implements Garage {
     public void addNewCar(Car car, Owner owner) {
         cars_by_id.putIfAbsent(car.getCarId(), car);
         owner_by_id.putIfAbsent(owner.getOwnerId(), owner);
-        cars_by_owner.putIfAbsent(owner.getOwnerId(), new ArrayList<>());
+        cars_by_owner.putIfAbsent(owner.getOwnerId(), new HashSet<>());
         cars_by_owner.get(car.getOwnerId()).add(car);
-        cars_by_brand.putIfAbsent(car.getBrand(), new ArrayList<>());
+        cars_by_brand.putIfAbsent(car.getBrand(), new HashSet<>());
         cars_by_brand.get(car.getBrand()).add(car);
-        cars_sorted_by_velocity.putIfAbsent(car, cars_sorted_by_velocity.size());
+        cars_sorted_by_velocity.add(car);
+        cars_sorted_by_power.add(car);
     }
 }

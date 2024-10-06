@@ -2,12 +2,15 @@ package org.example;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
+
+import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class CarGarageTest {
 
-    @org.junit.jupiter.api.Test
+    @Test
     void allCarsUniqueOwners() {
         CarGarage carGarage = new CarGarage();
         ArrayList<Owner> owners = new ArrayList<>();
@@ -34,12 +37,12 @@ class CarGarageTest {
         owners.add(tmp_owner5);
         carGarage.addNewCar(tmp_car, tmp_owner5);
         owners.sort(Comparator.comparingInt(Owner::getOwnerId));
-        var temp = carGarage.allCarsUniqueOwners();
+        ArrayList<Owner> temp = (ArrayList<Owner>) carGarage.allCarsUniqueOwners();
         temp.sort(Comparator.comparingInt(Owner::getOwnerId));
         assertEquals(temp, owners);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void topThreeCarsByMaxVelocity() {
         CarGarage carGarage = new CarGarage();
         ArrayList<Car> cars = new ArrayList<>();
@@ -68,10 +71,10 @@ class CarGarageTest {
         assertEquals(carGarage.topThreeCarsByMaxVelocity(), cars);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void allCarsOfBrand() {
         CarGarage carGarage = new CarGarage();
-        ArrayList<Car> cars = new ArrayList<>();
+        HashSet<Car> cars = new HashSet<>();
         Car tmp_car = new Car(1,"A", "A", 1, 1, 1);
         Owner tmp_owner = new Owner("A", "A", 1, 1);
         carGarage.addNewCar(tmp_car, tmp_owner);
@@ -92,13 +95,11 @@ class CarGarageTest {
         tmp_car = new Car(222,"222A", "A", 200, 200, 114);
         tmp_owner = new Owner("A", "A", 1, 114);
         carGarage.addNewCar(tmp_car, tmp_owner);
-        cars.sort(Comparator.comparingInt(Car::getMaxVelocity).reversed());
-        var temp = carGarage.allCarsOfBrand("dfsfA");
-        temp.sort(Comparator.comparingInt(Car::getMaxVelocity).reversed());
+        HashSet<Car> temp = (HashSet<Car>) carGarage.allCarsOfBrand("dfsfA");
         assertEquals(temp, cars);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void carsWithPowerMoreThan() {
         ArrayList<Car> cars = new ArrayList<>();
         CarGarage carGarage = new CarGarage();
@@ -123,15 +124,15 @@ class CarGarageTest {
         cars.add(tmp_car);
         carGarage.addNewCar(tmp_car, tmp_owner);
         cars.sort(Comparator.comparingInt(Car::getMaxVelocity).reversed());
-        var temp = carGarage.carsWithPowerMoreThan(115);
+        ArrayList<Car> temp = (ArrayList<Car>) carGarage.carsWithPowerMoreThan(115);
         temp.sort(Comparator.comparingInt(Car::getMaxVelocity).reversed());
         assertEquals(temp, cars);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void allCarsOfOwner() {
         CarGarage carGarage = new CarGarage();
-        ArrayList<Car> cars = new ArrayList<>();
+        HashSet<Car> cars = new HashSet<>();
         Car tmp_car = new Car(1,"A", "A", 1, 1, 1);
         Owner tmp_owner = new Owner("A", "A", 1, 1);
         cars.add(tmp_car);
@@ -149,13 +150,11 @@ class CarGarageTest {
         tmp_owner = new Owner("A", "A", 1, 1);
         cars.add(tmp_car);
         carGarage.addNewCar(tmp_car, tmp_owner);
-        cars.sort(Comparator.comparingInt(Car::getMaxVelocity).reversed());
-        var temp = carGarage.allCarsOfOwner(tmp_owner);
-        temp.sort(Comparator.comparingInt(Car::getMaxVelocity).reversed());
+        HashSet<Car> temp = (HashSet<Car>) carGarage.allCarsOfOwner(tmp_owner);
         assertEquals(temp, cars);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void meanOwnersAgeOfCarBrand() {
         CarGarage carGarage = new CarGarage();
         Car tmp_car = new Car(1,"A", "A", 1, 1, 1);
@@ -179,7 +178,7 @@ class CarGarageTest {
         assertEquals(carGarage.meanOwnersAgeOfCarBrand("dfsfA"), 7);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void meanCarNumberForEachOwner() {
         CarGarage carGarage = new CarGarage();
         Car tmp_car = new Car(1,"A", "A", 1, 1, 1);
@@ -203,7 +202,7 @@ class CarGarageTest {
         assertEquals(carGarage.meanCarNumberForEachOwner() ,1);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void removeCar() {
         CarGarage carGarage = new CarGarage();
         Car tmp_car = new Car(1,"A", "A", 1, 1, 1);
@@ -215,7 +214,7 @@ class CarGarageTest {
         assertEquals(carGarage.removeCar(222), tmp_car);
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void addNewCar() {
         CarGarage carGarage1 = new CarGarage();
         CarGarage carGarage2 = new CarGarage();
