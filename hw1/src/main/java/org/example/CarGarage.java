@@ -3,26 +3,26 @@ package org.example;
 import java.util.*;
 
 public class CarGarage implements Garage {
-    HashMap<Integer, Car> cars_by_id = new HashMap<>();
-    HashMap<Integer, Owner> owner_by_id = new HashMap<>();
-    HashMap<Integer, HashSet<Car>> cars_by_owner = new HashMap<>();
-    HashMap<String, HashSet<Car>> cars_by_brand = new HashMap<>();
-    SortedSet<Car> cars_sorted_by_velocity =
-            new TreeSet<>(Comparator.comparingInt(Car::getMaxVelocity).reversed());
-    SortedSet<Car> cars_sorted_by_power =
-            new TreeSet<>(Comparator.comparingInt(Car::getPower).reversed());
+    private final Map<Integer, Car> carsById = new HashMap<>();
+    private final Map<Integer, Owner> ownerById = new HashMap<>();
+    private final Map<Integer, HashSet<Car>> carsByOwner = new HashMap<>();
+    private final Map<String, HashSet<Car>> carsByBrand = new HashMap<>();
+    private final Set<Car> carsSortedByVelocity =
+            new TreeSet<>(Comparator.comparingInt(Car::getMaxVelocity).reversed()
+                    .thenComparingInt(Car::getCarId));
+    private final TreeSet<Car> carsSortedByPower =
+            new TreeSet<>(Comparator.comparingInt(Car::getPower).reversed()
+                    .thenComparingInt(Car::getCarId));
 
     @Override
     public Collection<Owner> allCarsUniqueOwners() {
-        ArrayList<Owner> answer = new ArrayList<>();
-        answer.addAll(owner_by_id.values());
-        return answer;
+        return ownerById.values();
     }
 
     @Override
     public Collection<Car> topThreeCarsByMaxVelocity() {
-        ArrayList<Car> answer = new ArrayList<>();
-        for (Car car: cars_sorted_by_velocity) {
+        List<Car> answer = new ArrayList<>();
+        for (Car car: carsSortedByVelocity) {
             if (answer.size() < 3) {
                 answer.add(car);
             }
@@ -32,78 +32,96 @@ public class CarGarage implements Garage {
 
     @Override
     public  Collection<Car> allCarsOfBrand(String brand) {
-        if (!cars_by_brand.containsKey(brand)) {
-            return null;
-        }
-        return cars_by_brand.get(brand);
+        return carsByBrand.getOrDefault(brand, new HashSet<>());
     }
 
     @Override
     public Collection<Car> carsWithPowerMoreThan(int power) {
-        ArrayList<Car> answer = new ArrayList<>();
-        for (Car car : cars_sorted_by_power) {
-            if (car.getPower() >= power) {
-                answer.add(car);
-            } else {
+        Car to = null;
+        for (Car car : carsSortedByPower) {
+            if (car.getPower() < power) {
+                to = car;
                 break;
             }
         }
-        return answer;
+        return carsSortedByPower.headSet(to);
     }
 
     @Override
     public Collection<Car> allCarsOfOwner(Owner owner) {
-        if (!owner_by_id.containsKey(owner.getOwnerId())) {
-            return null;
+        if (owner == null) {
+            return Collections.emptySet();
         }
-        return cars_by_owner.get(owner.getOwnerId());
+        return carsByOwner.getOrDefault(owner.getOwnerId(), new HashSet<>());
     }
 
     @Override
     public int meanOwnersAgeOfCarBrand(String brand) {
         int answer = 0;
-        for (Car car : cars_by_brand.get(brand)) {
-            answer += owner_by_id.get(car.getOwnerId()).getAge();
+        Set<Integer> usedOwners = new HashSet<>();
+        for (Car car : allCarsOfBrand(brand)) {
+            if (!usedOwners.contains(car.getOwnerId())) {
+                answer += ownerById.get(car.getOwnerId()).getAge();
+                usedOwners.add(car.getOwnerId());
+            }
         }
-        return answer / cars_by_brand.get(brand).size();
+        if (allCarsOfBrand(brand).isEmpty()) {
+            return 0;
+        }
+        return answer / allCarsOfBrand(brand).size();
     }
 
     @Override
     public int meanCarNumberForEachOwner() {
-        return cars_by_id.size() / owner_by_id.size();
+        if (ownerById.isEmpty()) {
+            return 0;
+        }
+        return carsById.size() / ownerById.size();
     }
 
     @Override
     public Car removeCar(int carId) {
-        if (!cars_by_id.containsKey(carId)) {
+        if (!carsById.containsKey(carId)) {
             return null;
         }
-        Integer tmp_owner_id = cars_by_id.get(carId).getOwnerId();
+        Integer tmp_owner_id = carsById.get(carId).getOwnerId();
+        Car answer = removeFromIdAndOwner(carId, tmp_owner_id);
+        removeFromBrandAndSets(answer);
+        return answer;
+    }
+
+    private void removeFromBrandAndSets(Car answer) {
+        carsByBrand.get(Objects.requireNonNull(answer).getBrand()).remove(answer);
+        carsSortedByVelocity.remove(answer);
+        carsSortedByPower.remove(answer);
+    }
+
+    private Car removeFromIdAndOwner(int carId, Integer tmp_owner_id) {
         Car answer = null;
-        if(cars_by_owner.get(tmp_owner_id).contains(cars_by_id.get(carId))) {
-            cars_by_owner.get(tmp_owner_id).remove(cars_by_id.get(carId));
-            if (cars_by_owner.get(tmp_owner_id).isEmpty()) {
-                cars_by_owner.remove(tmp_owner_id);
-                owner_by_id.remove(tmp_owner_id);
+        if(carsByOwner.get(tmp_owner_id).contains(carsById.get(carId))) {
+            carsByOwner.get(tmp_owner_id).remove(carsById.get(carId));
+            if (carsByOwner.get(tmp_owner_id).isEmpty()) {
+                carsByOwner.remove(tmp_owner_id);
+                ownerById.remove(tmp_owner_id);
             }
-            answer = cars_by_id.get(carId);
-            cars_by_id.remove(carId);
+            answer = carsById.get(carId);
+            carsById.remove(carId);
         }
-        cars_by_brand.get(Objects.requireNonNull(answer).getBrand()).remove(answer);
-        cars_sorted_by_velocity.remove(answer);
-        cars_sorted_by_power.remove(answer);
         return answer;
     }
 
     @Override
     public void addNewCar(Car car, Owner owner) {
-        cars_by_id.putIfAbsent(car.getCarId(), car);
-        owner_by_id.putIfAbsent(owner.getOwnerId(), owner);
-        cars_by_owner.putIfAbsent(owner.getOwnerId(), new HashSet<>());
-        cars_by_owner.get(car.getOwnerId()).add(car);
-        cars_by_brand.putIfAbsent(car.getBrand(), new HashSet<>());
-        cars_by_brand.get(car.getBrand()).add(car);
-        cars_sorted_by_velocity.add(car);
-        cars_sorted_by_power.add(car);
+        if (owner == null || car == null) {
+            return;
+        }
+        carsById.putIfAbsent(car.getCarId(), car);
+        ownerById.putIfAbsent(owner.getOwnerId(), owner);
+        carsByOwner.computeIfAbsent(owner.getOwnerId(), _ -> new HashSet<>()).add(car);
+        carsByOwner.get(car.getOwnerId()).add(car);
+        carsByBrand.computeIfAbsent(car.getBrand(), _ -> new HashSet<>()).add(car);
+        carsByBrand.get(car.getBrand()).add(car);
+        carsSortedByVelocity.add(car);
+        carsSortedByPower.add(car);
     }
 }
