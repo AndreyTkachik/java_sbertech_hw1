@@ -5,8 +5,8 @@ import java.util.*;
 public class CarGarage implements Garage {
     private final Map<Integer, Car> carsById = new HashMap<>();
     private final Map<Integer, Owner> ownerById = new HashMap<>();
-    private final Map<Integer, HashSet<Car>> carsByOwner = new HashMap<>();
-    private final Map<String, HashSet<Car>> carsByBrand = new HashMap<>();
+    private final Map<Integer, Set<Car>> carsByOwner = new HashMap<>();
+    private final Map<String, Set<Car>> carsByBrand = new HashMap<>();
     private final Set<Car> carsSortedByVelocity =
             new TreeSet<>(Comparator.comparingInt(Car::getMaxVelocity).reversed()
                     .thenComparingInt(Car::getCarId));
@@ -32,27 +32,17 @@ public class CarGarage implements Garage {
 
     @Override
     public  Collection<Car> allCarsOfBrand(String brand) {
-        return carsByBrand.getOrDefault(brand, new HashSet<>());
+        return carsByBrand.getOrDefault(brand, Collections.emptySet());
     }
 
     @Override
     public Collection<Car> carsWithPowerMoreThan(int power) {
-        Car to = null;
-        for (Car car : carsSortedByPower) {
-            if (car.getPower() < power) {
-                to = car;
-                break;
-            }
-        }
-        return carsSortedByPower.headSet(to);
+        return carsSortedByPower.headSet(new Car(0, null, null, 0, power + 1, 0));
     }
 
     @Override
     public Collection<Car> allCarsOfOwner(Owner owner) {
-        if (owner == null) {
-            return Collections.emptySet();
-        }
-        return carsByOwner.getOrDefault(owner.getOwnerId(), new HashSet<>());
+        return carsByOwner.getOrDefault(owner.getOwnerId(), Collections.emptySet());
     }
 
     @Override
@@ -84,8 +74,8 @@ public class CarGarage implements Garage {
         if (!carsById.containsKey(carId)) {
             return null;
         }
-        Integer tmp_owner_id = carsById.get(carId).getOwnerId();
-        Car answer = removeFromIdAndOwner(carId, tmp_owner_id);
+        int tmpOwnerId = carsById.get(carId).getOwnerId();
+        Car answer = removeFromIdAndOwner(carId, tmpOwnerId);
         removeFromBrandAndSets(answer);
         return answer;
     }
